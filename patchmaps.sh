@@ -29,7 +29,7 @@ mkdir -p .work
 mkdir -p .work/maps_fresh
 mkdir -p .work/maps_unpacked
 mkdir -p .work/balpack
-rm -rfv "$patched_dest"
+rm -rf "$patched_dest"
 mkdir -p "$patched_dest"
 
 # Read map ids and download.
@@ -119,4 +119,4 @@ printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... ${t_ital}done.${t_no
 printf "\n${t_ital}All done. Patched ${t_bold}%d${t_norm}${t_ital} maps.${t_norm}\n" "$(find .work/maps_unpacked -mindepth 1 -maxdepth 1 | wc -l)"
 
 # Clean up.
-rm -rfv .work
+rm -rf .work
