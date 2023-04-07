@@ -11,9 +11,12 @@ unzip_() {
 max_download_workers=18  # maximum number of maps to download at once
 patched_dest="patched"  # where to place patched maps
 
-# Take from args.
-bal_pack=$1
-map_ids_file=$2  # file with map ids to download and patch
+# ===============================
+
+# Take stuff from args.
+[ "$1" -a "$2" ] || { >&2 echo "USAGE: ./modmaps.sh <balance pack> <file of map IDs>"; exit 1; }
+bal_pack="$1"
+map_ids_file="$2"
 
 # Some output escape codes.
 t_clrln="\r\x1b[K"
@@ -23,6 +26,7 @@ t_norm=$(tput sgr0)
 
 # Create temporary working structures.
 mkdir -p .work
+rm -rf .work/maps_fresh
 mkdir -p .work/maps_fresh
 rm -rf .work/maps_unpacked/*
 mkdir -p .work/maps_unpacked
