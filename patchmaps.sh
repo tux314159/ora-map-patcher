@@ -26,13 +26,10 @@ t_norm=$(tput sgr0)
 
 # Create temporary working structures.
 mkdir -p .work
-rm -rf .work/maps_fresh
 mkdir -p .work/maps_fresh
-rm -rf .work/maps_unpacked/*
 mkdir -p .work/maps_unpacked
-rm -rf .work/balpack
 mkdir -p .work/balpack
-rm -rf "$patched_dest"
+rm -rfv "$patched_dest"
 mkdir -p "$patched_dest"
 
 # Read map ids and download.
@@ -118,4 +115,8 @@ for mapdir in .work/maps_unpacked/*; do
 done
 printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... ${t_ital}done.${t_norm}\n"
 
+# All done.
 printf "\n${t_ital}All done. Patched ${t_bold}%d${t_norm}${t_ital} maps.${t_norm}\n" "$(find .work/maps_unpacked -mindepth 1 -maxdepth 1 | wc -l)"
+
+# Clean up.
+rm -rfv .work
