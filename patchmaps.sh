@@ -146,7 +146,7 @@ if [ -f ".work/balpack/overlay.png" ]; then
 	for mapdir in .work/maps_unpacked/*; do
 		printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... (%s)" "$(basename "$mapdir")"
 		(cd "$mapdir"; zip -r "$(basename "$mapdir")".oramap ./* >/dev/null)
-		convert -composite "$mapdir/map.png" "$mapdir/overlay.png" "$mapdir/map.png"
+		magick "$mapdir/map.png" "$mapdir/overlay.png" -resize "%[fx:u.w]x%[fx:u.w]" -gravity center -composite "$mapdir/map.png"
 	done
 	printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... ${t_ital}done.${t_norm}\n"
 fi
