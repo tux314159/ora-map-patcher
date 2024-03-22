@@ -59,7 +59,7 @@ for id in $map_ids; do
 done
 
 # Batch downloads
-max_workers=$((max_workers * 2))	# *2 because each dl is actually four lines
+max_workers=$((max_workers * 2))	# *2 because each dl is actually two lines
 split -l$max_workers .work/dlcmds .work/dlcmds_batch
 for script in .work/dlcmds_batch*; do
 	printf "%s\n" "printf '\x1b[2D)';wait" >>"$script"
