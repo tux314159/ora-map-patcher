@@ -10,8 +10,6 @@ max_workers=4  # maximum number of workers at once (e.g. downloading, OpenRA.Uti
 patched_dest="patched"  # where to place patched maps
 ora_install="/usr/lib/openra"  # location of OpenRA installation
 
-rm -rf .work
-
 # ===============================
 # Patch the maps
 # ===============================
@@ -158,8 +156,8 @@ for mapdir in .work/maps_unpacked/*; do
 done
 printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... ${t_ital}done.${t_norm}\n"
 
-# All done.
+# All done
 printf "\n${t_ital}All done. Patched ${t_bold}%d${t_norm}${t_ital} maps.${t_norm}\n" "$(find .work/maps_unpacked -mindepth 1 -maxdepth 1 | wc -l)"
 
-# Clean up.
-#rm -rf .work
+# Clean up
+rm -rf .work
