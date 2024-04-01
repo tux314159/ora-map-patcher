@@ -10,33 +10,64 @@ max_workers=4  # maximum number of workers at once (e.g. downloading, OpenRA.Uti
 patched_dest="patched"  # where to place patched maps
 ora_install="/usr/lib/openra"  # location of OpenRA installation
 
+
 # ===============================
-# Patch the maps
-# ===============================
-
-# Take stuff from args
-{ [ "$1" ] && [ "$2" ] ; } || { >&2 echo "USAGE: ./modmaps.sh <balance pack> <file of map IDs>"; exit 1; }
-bal_pack="$1"
-map_ids_file="$2"
-
-# unzip but STFU
-unzip_() {
-	unzip "$1" >/dev/null
-}
-
-# Some output escape codes
-t_clrln="\r\033[K"
-t_bold=$(tput bold)
-t_ital=$(tput sitm)
-t_norm=$(tput sgr0)
-
 # Create temporary working structures
+# ===============================
 mkdir -p .work
 mkdir -p .work/maps_fresh
 mkdir -p .work/maps_unpacked
 mkdir -p .work/balpack
 rm -rf "$patched_dest"
 mkdir -p "$patched_dest"
+
+
+# ===============================
+# Patch the maps
+# ===============================
+
+# Unzip but STFU
+unzip_() {
+	unzip "$1" >/dev/null
+}
+
+# Print usage
+usage() {
+	echo "USAGE: ./modmaps.sh [-hq] -f <map id file> | -m <map id> <balance pack>"
+}
+
+# Parse arguments
+Q=
+while getopts hqf:m: opt; do
+	case $opt in
+		f)
+			map_ids_file="$OPTARG"
+			;;
+		m)
+			map_ids_file=".work/maps"
+			printf "%s\n" "$OPTARG" >"$map_ids_file"
+			;;
+		h)
+			usage
+			exit 0
+			;;
+		q)
+			Q=1
+			;;
+		*)
+			exit 1
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+{ [ ! "$1" ] || [ ! "$map_ids_file" ] ; } && { >&2 usage; exit 1; }
+bal_pack="$1"
+
+# Some output escape codes
+t_clrln="\r\033[K"
+t_bold=$(tput bold)
+t_ital=$(tput sitm)
+t_norm=$(tput sgr0)
 
 # Read map ids and download
 # Only numbers starting exactly on a new line will be considered; the rest of the line
@@ -48,7 +79,7 @@ for id in $map_ids; do
 	# We grab the title first, then use that as the filename with which to save the map,
 	# replacing all spaces with underscores
 	cat <<-EOF >>.work/dlcmds
-	printf "#$id, "
+	test $Q || printf "#$id, "
 	mapname=".work/maps_fresh/\$(curl -s "https://resource.openra.net/map/id/$id/yaml/" | \
 		grep 'title:' | tr -d '\t' | cut -d' ' -f2- | tr ' ' '_').oramap" && \
 	curl -s -o"\$mapname" "https://resource.openra.net/maps/$id/oramap" && \
@@ -60,11 +91,11 @@ done
 max_workers=$((max_workers * 2))	# *2 because each dl is actually two lines
 split -l$max_workers .work/dlcmds .work/dlcmds_batch
 for script in .work/dlcmds_batch*; do
-	printf "%s\n" "printf '\x1b[2D)';wait" >>"$script"
-	printf "${t_clrln}${t_bold}Downloading maps${t_norm}... ("
+	printf "%s\n" "test $Q || printf '\x1b[2D)';wait" >>"$script"
+	test $Q || printf "${t_clrln}${t_bold}Downloading maps${t_norm}... ("
 	sh "$script"
 done
-printf "${t_clrln}${t_bold}Downloading maps${t_norm}... ${t_ital}done.${t_norm}\n"
+test $Q || printf "${t_clrln}${t_bold}Downloading maps${t_norm}... ${t_ital}done.${t_norm}\n"
 
 # Unzip all maps
 for map in .work/maps_fresh/*; do
@@ -89,7 +120,7 @@ baserules=$(find "$ora_install/mods/ra/rules" "$ora_install/mods/ra/weapons" \
 
 # Process each map
 for mapdir in .work/maps_unpacked/*; do
-	printf "${t_clrln}${t_bold}Patching map YAML(s)${t_norm}... (%s)" "$(basename "$mapdir")"
+	test $Q || printf "${t_clrln}${t_bold}Patching map YAML(s)${t_norm}... (%s)" "$(basename "$mapdir")"
 	mapyaml="$mapdir/map.yaml"
 
 	# Go through yamls and delete keys that exist in baserules
@@ -136,28 +167,28 @@ for mapdir in .work/maps_unpacked/*; do
 		EOF
 	done
 done
-printf "${t_clrln}${t_bold}Patching map YAMLs${t_norm}... ${t_ital}done.${t_norm}\n"
+test $Q || printf "${t_clrln}${t_bold}Patching map YAMLs${t_norm}... ${t_ital}done.${t_norm}\n"
 
 # Composite the map preview overlay on
 if [ -f ".work/balpack/overlay.png" ]; then
 	for mapdir in .work/maps_unpacked/*; do
-		printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... (%s)" "$(basename "$mapdir")"
+		test $Q || printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... (%s)" "$(basename "$mapdir")"
 		(cd "$mapdir" || exit; zip -r "$(basename "$mapdir")".oramap ./* >/dev/null)
 		magick "$mapdir/map.png" "$mapdir/overlay.png" -resize "%[fx:u.w]x%[fx:u.w]" -gravity center -composite "$mapdir/map.png"
 	done
-	printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... ${t_ital}done.${t_norm}\n"
+	test $Q || printf "${t_clrln}${t_bold}Compositing map previews${t_norm}... ${t_ital}done.${t_norm}\n"
 fi
 
 # Zip the patched maps
 for mapdir in .work/maps_unpacked/*; do
-	printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... (%s)" "$(basename "$mapdir")"
+	test $Q || printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... (%s)" "$(basename "$mapdir")"
 	(cd "$mapdir" || exit; zip -r "$(basename "$mapdir")".oramap ./* >/dev/null)
 	mv "$mapdir/$(basename "$mapdir")".oramap "$patched_dest"
 done
-printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... ${t_ital}done.${t_norm}\n"
+test $Q || printf "${t_clrln}${t_bold}Zipping patched maps${t_norm}... ${t_ital}done.${t_norm}\n"
 
 # All done
-printf "\n${t_ital}All done. Patched ${t_bold}%d${t_norm}${t_ital} maps.${t_norm}\n" "$(find .work/maps_unpacked -mindepth 1 -maxdepth 1 | wc -l)"
+test $Q || printf "\n${t_ital}All done. Patched ${t_bold}%d${t_norm}${t_ital} maps.${t_norm}\n" "$(find .work/maps_unpacked -mindepth 1 -maxdepth 1 | wc -l)"
 
 # Clean up
 rm -rf .work
