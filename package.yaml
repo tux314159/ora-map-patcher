@@ -1,4 +1,4 @@
-name:    server
+name:    ora-map-patcher
 version: "0.0.0"
 
 dependencies:
@@ -63,7 +63,7 @@ library:
 
 # Runnable executable for our application
 executables:
-  server:
+  ora-map-patcher:
     main: main.hs
     source-dirs: app
     ghc-options:
@@ -71,19 +71,19 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - server
+    - ora-map-patcher
     when:
     - condition: flag(library-only)
       buildable: false
 
 # Test suite
 tests:
-  server-test:
+  ora-map-patcher-test:
     main: Spec.hs
     source-dirs: test
     ghc-options: -Wall
     dependencies:
-    - server
+    - ora-map-patcher
     - hspec >=2.0.0
     - yesod-test
     - microlens
